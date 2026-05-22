@@ -1,0 +1,6 @@
+---
+- name: Apply Linux operations baseline
+  ansible.builtin.import_playbook: update.yml
+
+- name: Configure observability log forwarding
+  ansible.builtin.import_playbook: filebeat.yml

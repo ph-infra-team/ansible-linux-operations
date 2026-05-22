@@ -1,0 +1,70 @@
+---
+- name: Remove stale loopback hostname entry
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1\s+.*'
+    state: absent
+  when: dns_client_manage_hosts_file
+
+- name: Remove existing hostname mapping
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '.*\b{{ inventory_hostname }}\b.*'
+    state: absent
+  when: dns_client_manage_hosts_file
+
+- name: Add interface IP mapping for hostname
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_facts[dns_client_interface].ipv4.address }} {{ inventory_hostname }} {{ inventory_hostname.split('.')[0] }}"
+    state: present
+  when:
+    - dns_client_manage_hosts_file
+    - dns_client_interface in ansible_facts
+    - ansible_facts[dns_client_interface].ipv4 is defined
+
+- name: Get NetworkManager connections
+  ansible.builtin.command: nmcli -t -f NAME,DEVICE con show
+  register: dns_client_nmcli_connections
+  changed_when: false
+
+- name: Select connection for DNS interface
+  ansible.builtin.set_fact:
+    dns_client_connection_name: >-
+      {{
+        dns_client_nmcli_connections.stdout_lines
+        | select('search', ':' + dns_client_interface + '$')
+        | map('regex_replace', ':' + dns_client_interface + '$', '')
+        | list
+        | first
+      }}
+
+- name: Configure DNS server on NetworkManager connection
+  ansible.builtin.command: nmcli con mod "{{ dns_client_connection_name }}" ipv4.dns "{{ dns_client_server }}"
+  changed_when: true
+  when: dns_client_connection_name | length > 0
+
+- name: Disable automatic DNS on NetworkManager connection
+  ansible.builtin.command: nmcli con mod "{{ dns_client_connection_name }}" ipv4.ignore-auto-dns yes
+  changed_when: true
+  when: dns_client_connection_name | length > 0
+
+- name: Restart NetworkManager connection
+  ansible.builtin.shell: |
+    set -euo pipefail
+    nmcli con down "{{ dns_client_connection_name }}"
+    sleep 1
+    nmcli con up "{{ dns_client_connection_name }}"
+  args:
+    executable: /bin/bash
+  changed_when: true
+  when: dns_client_connection_name | length > 0
+
+- name: Ensure resolv.conf contains DNS server
+  ansible.builtin.lineinfile:
+    path: /etc/resolv.conf
+    line: "nameserver {{ dns_client_server }}"
+    state: present
+    create: true
+    mode: "0644"
+  when: dns_client_manage_resolv_conf

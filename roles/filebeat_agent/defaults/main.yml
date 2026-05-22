@@ -1,0 +1,9 @@
+---
+filebeat_logstash_host: logstash.example.com
+filebeat_logstash_port: 5044
+filebeat_config_path: /etc/filebeat/filebeat.yml
+filebeat_elastic_repo_major_version: "9.x"
+filebeat_log_paths:
+  - /var/log/messages
+  - /var/log/secure
+  - /var/log/syslog

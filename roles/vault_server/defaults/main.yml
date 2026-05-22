@@ -1,0 +1,13 @@
+---
+vault_user: vault
+vault_group: vault
+vault_config_dir: /etc/vault.d
+vault_data_dir: /opt/vault/data
+vault_config_file: /etc/vault.d/vault.hcl
+vault_service_file: /etc/systemd/system/vault.service
+vault_bin_path: /usr/bin/vault
+vault_listener_address: 0.0.0.0:8200
+vault_storage_path: /opt/vault/data
+vault_tls_disable: false
+vault_tls_cert_file: /etc/vault.d/tls/tls.crt
+vault_tls_key_file: /etc/vault.d/tls/tls.key

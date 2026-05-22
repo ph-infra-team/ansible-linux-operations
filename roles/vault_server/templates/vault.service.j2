@@ -1,0 +1,15 @@
+[Unit]
+Description=Vault service
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+User={{ vault_user }}
+Group={{ vault_group }}
+ExecStart={{ vault_bin_path }} server -config={{ vault_config_file }}
+ExecReload=/bin/kill --signal HUP $MAINPID
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

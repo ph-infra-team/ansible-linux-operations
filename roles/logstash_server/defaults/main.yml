@@ -1,0 +1,5 @@
+---
+logstash_config_path: /etc/logstash/conf.d/syslog-pipeline.conf
+logstash_elasticsearch_host: http://esmaster.example.com:9200
+logstash_listen_port: 5044
+logstash_output_index: midh_syslog

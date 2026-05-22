@@ -1,0 +1,5 @@
+---
+dns_client_interface: eth1
+dns_client_server: 192.168.1.155
+dns_client_manage_hosts_file: true
+dns_client_manage_resolv_conf: true

@@ -1,0 +1,7 @@
+---
+- name: Install and configure Filebeat agents
+  hosts: linux
+  become: true
+  gather_facts: true
+  roles:
+    - role: filebeat_agent

@@ -1,0 +1,7 @@
+---
+- name: Configure Linux DNS clients
+  hosts: dns_clients
+  become: true
+  gather_facts: true
+  roles:
+    - role: dns_client

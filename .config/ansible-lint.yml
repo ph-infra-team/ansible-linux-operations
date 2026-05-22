@@ -1,0 +1,12 @@
+---
+profile: production
+exclude_paths:
+  - .git
+  - .venv
+  - collections
+  - roles/external
+warn_list:
+  - experimental
+  - fqcn
+skip_list:
+  - name[template]

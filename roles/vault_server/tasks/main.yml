@@ -1,0 +1,123 @@
+---
+- name: Install required packages on Debian family
+  ansible.builtin.apt:
+    name:
+      - unzip
+      - curl
+      - gnupg
+      - software-properties-common
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Ensure APT keyring directory exists
+  ansible.builtin.file:
+    path: /usr/share/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: ansible_os_family == "Debian"
+
+- name: Install HashiCorp APT signing key
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -fsSL https://apt.releases.hashicorp.com/gpg \
+      | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  args:
+    executable: /bin/bash
+    creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  when: ansible_os_family == "Debian"
+
+- name: Configure HashiCorp APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release | lower }} main"
+    filename: hashicorp
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Install required packages on RedHat family
+  ansible.builtin.dnf:
+    name:
+      - unzip
+      - curl
+      - gnupg2
+      - yum-utils
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Add HashiCorp repository on RedHat family
+  ansible.builtin.yum_repository:
+    name: hashicorp
+    description: HashiCorp Stable - $basearch
+    baseurl: https://rpm.releases.hashicorp.com/RHEL/$releasever/$basearch/stable
+    gpgcheck: true
+    gpgkey: https://rpm.releases.hashicorp.com/gpg
+    enabled: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install Vault on RedHat family
+  ansible.builtin.dnf:
+    name: vault
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install Vault on Debian family
+  ansible.builtin.apt:
+    name: vault
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Create Vault group
+  ansible.builtin.group:
+    name: "{{ vault_group }}"
+    system: true
+    state: present
+
+- name: Create Vault user
+  ansible.builtin.user:
+    name: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+
+- name: Create Vault directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: "0750"
+  loop:
+    - "{{ vault_config_dir }}"
+    - "{{ vault_data_dir }}"
+
+- name: Deploy Vault configuration
+  ansible.builtin.template:
+    src: vault.hcl.j2
+    dest: "{{ vault_config_file }}"
+    owner: "{{ vault_user }}"
+    group: "{{ vault_group }}"
+    mode: "0640"
+  notify: Restart vault
+
+- name: Deploy Vault systemd unit
+  ansible.builtin.template:
+    src: vault.service.j2
+    dest: "{{ vault_service_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart vault
+
+- name: Enable and start Vault
+  ansible.builtin.systemd:
+    name: vault
+    enabled: true
+    state: started
+    daemon_reload: true

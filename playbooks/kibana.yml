@@ -1,0 +1,7 @@
+---
+- name: Install and configure Kibana
+  hosts: kibana
+  become: true
+  gather_facts: true
+  roles:
+    - role: kibana_server

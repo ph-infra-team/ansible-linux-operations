@@ -1,0 +1,28 @@
+---
+linux_update_enable_epel: true
+linux_update_enable_crb: true
+linux_update_reboot_if_required: false
+
+dns_client_interface: eth1
+dns_client_server: 192.168.1.155
+dns_client_manage_hosts_file: true
+
+filebeat_logstash_host: logstash.example.com
+filebeat_logstash_port: 5044
+filebeat_config_path: /etc/filebeat/filebeat.yml
+filebeat_log_paths:
+  - /var/log/messages
+  - /var/log/secure
+  - /var/log/syslog
+
+logstash_listen_port: 5044
+logstash_elasticsearch_host: http://esmaster.example.com:9200
+logstash_output_index: midh_syslog
+
+kibana_elasticsearch_host: http://esmaster.example.com:9200
+kibana_server_host: 0.0.0.0
+kibana_server_port: 5601
+
+vault_tls_disable: false
+vault_listener_address: 0.0.0.0:8200
+vault_storage_path: /opt/vault/data

@@ -1,0 +1,5 @@
+---
+- name: Restart logstash
+  ansible.builtin.systemd:
+    name: logstash
+    state: restarted

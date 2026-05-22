@@ -1,0 +1,42 @@
+---
+- name: Add Elastic GPG key
+  ansible.builtin.rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Configure Kibana package repository
+  ansible.builtin.yum_repository:
+    name: kibana
+    description: Elastic Kibana Repository
+    baseurl: https://artifacts.elastic.co/packages/9.x/yum
+    gpgcheck: true
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    enabled: true
+
+- name: Install Kibana
+  ansible.builtin.dnf:
+    name: kibana
+    state: present
+
+- name: Configure Kibana
+  ansible.builtin.template:
+    src: kibana.yml.j2
+    dest: "{{ kibana_config_path }}"
+    owner: root
+    group: kibana
+    mode: "0640"
+  notify: Restart kibana
+
+- name: Enable and start Kibana
+  ansible.builtin.systemd:
+    name: kibana
+    enabled: true
+    state: started
+
+- name: Open Kibana firewall port
+  ansible.posix.firewalld:
+    port: "{{ kibana_server_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  when: kibana_open_firewall

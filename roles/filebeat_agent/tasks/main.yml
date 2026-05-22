@@ -1,0 +1,34 @@
+---
+- name: Add Elastic GPG key
+  ansible.builtin.rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Configure Elastic package repository
+  ansible.builtin.yum_repository:
+    name: elasticsearch-{{ filebeat_elastic_repo_major_version }}
+    description: Elasticsearch repository for {{ filebeat_elastic_repo_major_version }} packages
+    baseurl: https://artifacts.elastic.co/packages/{{ filebeat_elastic_repo_major_version }}/yum
+    gpgcheck: true
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    enabled: true
+
+- name: Install Filebeat
+  ansible.builtin.dnf:
+    name: filebeat
+    state: present
+
+- name: Deploy Filebeat configuration
+  ansible.builtin.template:
+    src: filebeat.yml.j2
+    dest: "{{ filebeat_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart filebeat
+
+- name: Enable and start Filebeat
+  ansible.builtin.systemd:
+    name: filebeat
+    enabled: true
+    state: started

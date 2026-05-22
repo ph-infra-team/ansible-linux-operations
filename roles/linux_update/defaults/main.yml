@@ -1,0 +1,6 @@
+---
+linux_update_enable_epel: true
+linux_update_enable_crb: true
+linux_update_reboot_if_required: false
+linux_update_packages:
+  - "*"

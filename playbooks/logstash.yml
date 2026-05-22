@@ -1,0 +1,7 @@
+---
+- name: Install and configure Logstash
+  hosts: logstash
+  become: true
+  gather_facts: true
+  roles:
+    - role: logstash_server

@@ -1,0 +1,44 @@
+---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Enable EPEL on Rocky Linux 9
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+  when:
+    - linux_update_enable_epel
+    - ansible_distribution == "Rocky"
+    - ansible_distribution_major_version == "9"
+
+- name: Enable CRB on Rocky Linux 9
+  ansible.builtin.command: dnf config-manager --set-enabled crb
+  changed_when: false
+  when:
+    - linux_update_enable_crb
+    - ansible_distribution == "Rocky"
+    - ansible_distribution_major_version == "9"
+
+- name: Enable CodeReady Builder on RHEL 9
+  ansible.builtin.command: subscription-manager repos --enable codeready-builder-for-rhel-9-{{ ansible_architecture }}-rpms
+  changed_when: false
+  failed_when: false
+  when:
+    - linux_update_enable_crb
+    - ansible_distribution == "RedHat"
+    - ansible_distribution_major_version == "9"
+
+- name: Update requested packages
+  ansible.builtin.dnf:
+    name: "{{ linux_update_packages }}"
+    state: latest
+    update_cache: true
+  register: linux_update_result
+
+- name: Reboot after package update when enabled
+  ansible.builtin.reboot:
+    reboot_timeout: 600
+  when:
+    - linux_update_reboot_if_required
+    - linux_update_result is changed

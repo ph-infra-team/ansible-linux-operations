@@ -1,0 +1,6 @@
+---
+kibana_elasticsearch_host: http://esmaster.example.com:9200
+kibana_server_host: 0.0.0.0
+kibana_server_port: 5601
+kibana_config_path: /etc/kibana/kibana.yml
+kibana_open_firewall: true

@@ -1,0 +1,20 @@
+---
+- name: Install Logstash
+  ansible.builtin.dnf:
+    name: logstash
+    state: present
+
+- name: Deploy Logstash syslog pipeline
+  ansible.builtin.template:
+    src: syslog-pipeline.conf.j2
+    dest: "{{ logstash_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart logstash
+
+- name: Enable and start Logstash
+  ansible.builtin.systemd:
+    name: logstash
+    enabled: true
+    state: started
